@@ -1,0 +1,14 @@
+package mx.edu.utez.sima.modules.article;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ArticleRepository extends JpaRepository< Article, Long> {
+
+    List<Article> findByArticleName(String name);
+
+
+}

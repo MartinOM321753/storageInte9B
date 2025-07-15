@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>utez.edu.mx</groupId>
-    <artifactId>storageInte9B</artifactId>
+    <artifactId>sima</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>storageInte9B</name>
     <description>storageInte9B</description>
