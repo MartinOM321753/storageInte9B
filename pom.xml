@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>utez.edu.mx</groupId>
-    <artifactId>unidad3</artifactId>
+    <artifactId>storageInte9B</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>unidad3</name>
-    <description>unidad3</description>
+    <name>storageInte9B</name>
+    <description>storageInte9B</description>
     <url/>
     <licenses>
         <license/>
