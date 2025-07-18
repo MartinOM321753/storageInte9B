@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import mx.edu.utez.sima.modules.user.BeanUser;
-import mx.edu.utez.sima.modules.user.UserRpository;
+import mx.edu.utez.sima.modules.user.UserRepository;
 
 import java.util.Collections;
 
@@ -18,11 +18,11 @@ import java.util.Collections;
 public class UDService implements UserDetailsService {
 
     @Autowired
-    private UserRpository userRpository;
+    private UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        BeanUser found = userRpository.findByUsername(username).orElse(null);
+        BeanUser found = userRepository.findByUsername(username).orElse(null);
         if (found == null) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }

@@ -2,19 +2,30 @@ package mx.edu.utez.sima.utils;
 
 import org.springframework.http.HttpStatus;
 
+import java.util.List;
+
 public class APIResponse {
     private String message;
     private Object data;
     private boolean error;
     private HttpStatus status;
 
-    public APIResponse(String message, boolean error, HttpStatus status) {
+
+    public APIResponse(String message, Object data, boolean error, HttpStatus status) {
         this.message = message;
+        this.data = data;
         this.error = error;
         this.status = status;
     }
 
-    public APIResponse(String message, Object data, boolean error, HttpStatus status) {
+
+    public APIResponse(List<Object> data, String message, boolean error, HttpStatus status) {
+        this.message = message;
+        this.data = data;
+        this.error = error;
+        this.status = status;
+    }
+    public APIResponse( String message, boolean error, HttpStatus status) {
         this.message = message;
         this.data = data;
         this.error = error;

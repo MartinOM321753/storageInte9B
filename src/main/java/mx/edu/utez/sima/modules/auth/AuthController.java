@@ -6,15 +6,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import mx.edu.utez.sima.modules.auth.dto.LoginRequestDTO;
+import mx.edu.utez.sima.modules.user.BeanUser;
+import mx.edu.utez.sima.utils.APIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import mx.edu.utez.sima.modules.auth.dto.LoginRequestDTO;
-import mx.edu.utez.sima.modules.user.BeanUser;
-import mx.edu.utez.sima.utils.APIResponse;
 
 @RestController
 @RequestMapping("/api/auth")

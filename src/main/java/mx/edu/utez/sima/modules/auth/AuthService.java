@@ -1,24 +1,24 @@
 package mx.edu.utez.sima.modules.auth;
 
+import mx.edu.utez.sima.modules.auth.dto.LoginRequestDTO;
+import mx.edu.utez.sima.modules.user.BeanUser;
+import mx.edu.utez.sima.modules.user.UserRepository;
+import mx.edu.utez.sima.security.jwt.JWTUtils;
+import mx.edu.utez.sima.security.jwt.UDService;
+import mx.edu.utez.sima.utils.APIResponse;
+import mx.edu.utez.sima.utils.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import mx.edu.utez.sima.modules.auth.dto.LoginRequestDTO;
-import mx.edu.utez.sima.modules.user.BeanUser;
-import mx.edu.utez.sima.modules.user.UserRpository;
-import mx.edu.utez.sima.security.jwt.JWTUtils;
-import mx.edu.utez.sima.security.jwt.UDService;
-import mx.edu.utez.sima.utils.APIResponse;
-import mx.edu.utez.sima.utils.PasswordEncoder;
 
 import java.sql.SQLException;
 
 @Service
 public class AuthService {
     @Autowired
-    private UserRpository userRpository;
+    private UserRepository userRpository;
 
     @Autowired
     private UDService udService;
