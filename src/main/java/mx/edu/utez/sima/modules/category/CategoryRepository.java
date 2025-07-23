@@ -46,12 +46,6 @@ public interface CategoryRepository extends JpaRepository< Category, Long> {
     @Query("SELECT COUNT(a) FROM Article a WHERE a.category.id = :categoryId")
     Long countArticlesByCategoryId(@Param("categoryId") Long categoryId);
 
-    // Buscar categorías ordenadas por nombre
-    List<Category> findAllByOrderByCategoryNameAsc();
-
-    // Buscar categorías ordenadas por fecha de creación
-    List<Category> findAllByOrderByCreatedAtDesc();
-
     // Buscar categorías creadas en un rango de fechas
     @Query("SELECT c FROM Category c WHERE c.createdAt BETWEEN :startDate AND :endDate")
     List<Category> findByCreatedAtBetween(@Param("startDate") java.time.LocalDateTime startDate,

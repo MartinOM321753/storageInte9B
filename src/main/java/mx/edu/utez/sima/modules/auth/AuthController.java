@@ -9,19 +9,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import mx.edu.utez.sima.modules.auth.dto.LoginRequestDTO;
 import mx.edu.utez.sima.modules.user.BeanUser;
 import mx.edu.utez.sima.utils.APIResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Controlador de Autenticación", description = "Operaciones relacionadas con autenticación y registro de usuarios")
 public class AuthController {
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("")
     @Operation(summary = "Iniciar sesión", description = "Permite a un usuario iniciar sesión en el sistema")
@@ -68,6 +67,12 @@ public class AuthController {
     })
     public ResponseEntity<APIResponse> register(@RequestBody BeanUser payload){
         APIResponse response = authService.register(payload);
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @GetMapping("/forgotPassword")
+    public ResponseEntity<APIResponse> forgotPassword(@RequestParam String email) {
+        APIResponse response = authService.forwardPassword(email);
         return new ResponseEntity<>(response, response.getStatus());
     }
 }

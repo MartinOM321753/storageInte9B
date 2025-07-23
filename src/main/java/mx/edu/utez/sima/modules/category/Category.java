@@ -1,6 +1,7 @@
 package mx.edu.utez.sima.modules.category;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import mx.edu.utez.sima.modules.article.Article;
 import mx.edu.utez.sima.modules.storage.Storage;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "category")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Category {
 
     @Id

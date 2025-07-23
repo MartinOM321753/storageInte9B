@@ -1,5 +1,6 @@
 package mx.edu.utez.sima.modules.storage;
 
+
 import jakarta.persistence.*;
 import mx.edu.utez.sima.modules.article.Article;
 import mx.edu.utez.sima.modules.category.Category;
@@ -20,13 +21,14 @@ public class Storage {
     @Column(name = "uuid", nullable = false, unique = true)
     private String uuid;
 
-    @Column(name = "storage_identifier", nullable = false, unique = true, length = 20)
+    @Column(name = "storage_identifier", unique = true, length = 20)
     private String storageIdentifier;
 
     @Column(name = "status", nullable = false)
     private Boolean status;
 
-    @OneToOne(fetch = FetchType.LAZY)
+
+    @OneToOne()
     @JoinColumn(name = "responsible_id", unique = true)
     private BeanUser responsible;
 

@@ -21,17 +21,24 @@ public class CategoryService {
 
     private static final Logger log = LoggerFactory.getLogger(CategoryService.class);
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
+
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     // Crear categoría
-    public ResponseEntity<APIResponse> createCategory(Category category) {
+    public ResponseEntity<APIResponse> createCategory(String categorysName) {
         try {
-            if (categoryRepository.existsByCategoryName(category.getCategoryName())) {
+            Category foundcategory = categoryRepository.findByCategoryName(categorysName).orElse(null);
+
+            if (foundcategory != null) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("Categoría con este nombre ya existe", true, HttpStatus.CONFLICT));
             }
 
+            Category category = new Category();
+            category.setCategoryName(categorysName);
             category.setUuid(UUID.randomUUID().toString());
             Category saved = categoryRepository.save(category);
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -112,18 +119,18 @@ public class CategoryService {
     }
 
     // Actualizar categoría
-    public ResponseEntity<APIResponse> updateCategory(Long id, Category categoryDetails) {
+    public ResponseEntity<APIResponse> updateCategory(Long id, String categoryDetails) {
         try {
             Category category = categoryRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
-            if (!category.getCategoryName().equals(categoryDetails.getCategoryName()) &&
-                    categoryRepository.existsByCategoryName(categoryDetails.getCategoryName())) {
+            if (!category.getCategoryName().equals(categoryDetails) &&
+                    categoryRepository.existsByCategoryName(categoryDetails)) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("Categoría con este nombre ya existe", true, HttpStatus.CONFLICT));
             }
 
-            category.setCategoryName(categoryDetails.getCategoryName());
+            category.setCategoryName(categoryDetails);
             Category updated = categoryRepository.save(category);
             return ResponseEntity.ok(new APIResponse("Categoría actualizada", updated, false, HttpStatus.OK));
 

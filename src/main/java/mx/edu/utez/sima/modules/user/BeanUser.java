@@ -37,10 +37,13 @@ public class BeanUser {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
+    @Column(name = "temporal_password", nullable = false)
+    private Boolean temporal_password = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "role_id", nullable = false)
     private Rol rol;
 
@@ -55,7 +58,7 @@ public class BeanUser {
     public BeanUser() {
     }
 
-    public BeanUser(Long id, String uuid, String username, String password, String name,String lastName, String email, Boolean active, LocalDateTime createdAt, Rol rol, Storage storage) {
+    public BeanUser(Long id, String uuid, String username, String password, String name, String lastName, String email, Boolean active, Boolean temporal_password, LocalDateTime createdAt, Rol rol, Storage storage) {
         this.id = id;
         this.uuid = uuid;
         this.username = username;
@@ -64,11 +67,19 @@ public class BeanUser {
         this.lastName = lastName;
         this.email = email;
         this.active = active;
+        this.temporal_password = temporal_password;
         this.createdAt = createdAt;
         this.rol = rol;
         this.storage = storage;
     }
 
+    public Boolean getTemporal_password() {
+        return temporal_password;
+    }
+
+    public void setTemporal_password(Boolean temporal_password) {
+        this.temporal_password = temporal_password;
+    }
 
     public Storage getStorage() {
         return storage;

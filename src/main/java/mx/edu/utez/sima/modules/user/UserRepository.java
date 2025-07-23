@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<BeanUser, Long> {
     // Buscar por username
     Optional<BeanUser> findByUsername(String username);
 
+
+    Optional<BeanUser> findByUuidAndRol_Name(String uuid, String rol_name);
     // Buscar por email
     Optional<BeanUser> findByEmail(String email);
 

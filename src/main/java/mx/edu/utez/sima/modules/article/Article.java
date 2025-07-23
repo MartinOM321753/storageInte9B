@@ -1,6 +1,7 @@
 package mx.edu.utez.sima.modules.article;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import mx.edu.utez.sima.modules.category.Category;
 import mx.edu.utez.sima.modules.storage.Storage;
@@ -36,6 +37,7 @@ public class Article {
 
 
     @ManyToMany(mappedBy = "articles")
+    @JsonIgnore
     private List<Storage> storages = new ArrayList<>();
 
     public Article() {

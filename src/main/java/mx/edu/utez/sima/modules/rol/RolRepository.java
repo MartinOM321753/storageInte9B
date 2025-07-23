@@ -6,13 +6,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface RolRepository extends JpaRepository<Rol, Long> {
 
     // Buscar por nombre
-    Optional<Rol> findByName(String name);
+    Rol findByName(String name);
 
     // Verificar si existe por nombre
     boolean existsByName(String name);
@@ -32,8 +31,7 @@ public interface RolRepository extends JpaRepository<Rol, Long> {
     @Query("SELECT COUNT(u) FROM BeanUser u WHERE u.rol.id = :rolId")
     Long countUsersByRolId(@Param("rolId") Long rolId);
 
-    // Buscar roles ordenados por nombre
-    List<Rol> findAllByOrderByNameAsc();
+
 
     // Buscar roles específicos (útil para obtener roles predefinidos)
     @Query("SELECT r FROM Rol r WHERE r.name IN :roleNames")

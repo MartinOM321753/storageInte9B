@@ -33,7 +33,6 @@ public class UDService implements UserDetailsService {
                 found.getUsername(),
                 found.getPassword(),
                 Collections.singleton(authority)
-
         );
     }
 }

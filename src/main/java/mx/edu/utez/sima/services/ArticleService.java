@@ -2,9 +2,12 @@ package mx.edu.utez.sima.services;
 
 import mx.edu.utez.sima.modules.article.Article;
 import mx.edu.utez.sima.modules.article.ArticleRepository;
+import mx.edu.utez.sima.modules.category.Category;
 import mx.edu.utez.sima.modules.storage.Storage;
 import mx.edu.utez.sima.modules.category.CategoryRepository;
 import mx.edu.utez.sima.modules.storage.StorageRepository;
+import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticle;
+import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticleRepository;
 import mx.edu.utez.sima.utils.APIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,24 +22,43 @@ import java.util.UUID;
 @Service
 public class ArticleService {
 
-    @Autowired
-    private ArticleRepository articleRepository;
+    private final ArticleRepository articleRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private StorageRepository storageRepository;
+    private final StorageRepository storageRepository;
+
+    private final StorageHasArticleRepository storageHasArticleRepository;
+
+    public ArticleService(ArticleRepository articleRepository, CategoryRepository categoryRepository, StorageRepository storageRepository, StorageHasArticleRepository storageHasArticleRepository) {
+        this.articleRepository = articleRepository;
+        this.categoryRepository = categoryRepository;
+        this.storageRepository = storageRepository;
+        this.storageHasArticleRepository = storageHasArticleRepository;
+    }
+
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> createArticle(Article article) {
         try {
+
+            Optional<Article> foundArticle=  articleRepository.findByArticleName(article.getArticleName());
+            Optional<Category> category =  categoryRepository.findById(article.getCategory().getId());
+            if (foundArticle.isPresent()) {
+                return ResponseEntity.badRequest().body(new APIResponse("El artículo ya existe", true, HttpStatus.BAD_REQUEST));
+            }
+
+            if (category.isEmpty()) {
+                return ResponseEntity.badRequest().body(new APIResponse("Categoría no encontrada", true, HttpStatus.BAD_REQUEST));
+            }
+
             article.setUuid(UUID.randomUUID().toString());
 
             if (article.getQuantity() <= 0) {
                 return ResponseEntity.badRequest().body(new APIResponse("La cantidad debe ser mayor a 0", true, HttpStatus.BAD_REQUEST));
             }
 
+            article.setCategory(category.get());
             Article saved = articleRepository.save(article);
             return ResponseEntity.ok(new APIResponse("Artículo creado correctamente", saved, false, HttpStatus.OK));
         } catch (Exception e) {
@@ -94,15 +116,32 @@ public class ArticleService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<APIResponse> updateArticle(Long id, Article articleDetails) {
+    public ResponseEntity<APIResponse> updateArticle(Article articleDetails) {
         try {
-            Article article = articleRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Artículo no encontrado"));
+
+            Article article = articleRepository.findById(articleDetails.getId()).orElse(null);
+
+            Optional<Category> category =  categoryRepository.findById(articleDetails.getCategory().getId());
+
+            if (article == null) {
+                return ResponseEntity.badRequest().body(new APIResponse("El artículo no existe", true, HttpStatus.BAD_REQUEST));
+            }
+
+            if (category.isEmpty()) {
+                return ResponseEntity.badRequest().body(new APIResponse("Categoría no encontrada", true, HttpStatus.BAD_REQUEST));
+            }
+
+            if (!article.getArticleName().equals(articleDetails.getArticleName())){
+                Optional<Article> foundArticle = articleRepository.findByArticleName(articleDetails.getArticleName());
+                if (foundArticle.isPresent()) {
+                    return ResponseEntity.badRequest().body(new APIResponse("El nombre del artículo ya existe", true, HttpStatus.BAD_REQUEST));
+                }
+            }
 
             article.setArticleName(articleDetails.getArticleName());
             article.setDescription(articleDetails.getDescription());
             article.setQuantity(articleDetails.getQuantity());
-            article.setCategory(articleDetails.getCategory());
+            article.setCategory(category.get());
 
             if (article.getQuantity() <= 0) {
                 return ResponseEntity.badRequest().body(new APIResponse("La cantidad debe ser mayor a 0", true, HttpStatus.BAD_REQUEST));
@@ -261,6 +300,7 @@ public class ArticleService {
             Storage storage = storageRepository.findById(storageId)
                     .orElseThrow(() -> new RuntimeException("Almacén no encontrado"));
 
+
             boolean isValid = article.getCategory().getId().equals(storage.getCategory().getId());
             return ResponseEntity.ok(new APIResponse("Validación completada", isValid, false, HttpStatus.OK));
         } catch (Exception e) {
@@ -303,4 +343,46 @@ public class ArticleService {
                     .body(new APIResponse("Error al calcular total en inventario", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<APIResponse> assignArticleToStorage(Long articleId, Long storageId, Long assignQuantity) {
+        try {
+            Article article = articleRepository.findById(articleId)
+                    .orElseThrow(() -> new RuntimeException("Artículo no encontrado"));
+            Storage storage = storageRepository.findById(storageId)
+                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado"));
+
+            // Validación: que el artículo y el almacén pertenezcan a la misma categoría
+            if (!article.getCategory().getId().equals(storage.getCategory().getId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new APIResponse("El artículo y el almacén no pertenecen a la misma categoría", true, HttpStatus.BAD_REQUEST));
+            }
+
+            if (assignQuantity <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new APIResponse("La cantidad a asignar debe ser mayor a 0", true, HttpStatus.BAD_REQUEST));
+            }
+
+            if (article.getQuantity() < assignQuantity) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new APIResponse("Cantidad del artículo insuficiente", true, HttpStatus.BAD_REQUEST));
+            }
+
+            // Disminuye la cantidad del artículo
+            article.setQuantity(article.getQuantity() - assignQuantity);
+            articleRepository.save(article);
+
+            // Por cada unidad a asignar se crea un registro en la tabla de intersección
+            for (int i = 0; i < assignQuantity; i++) {
+                StorageHasArticle sha = new StorageHasArticle(article, storage);
+                storageHasArticleRepository.save(sha);
+            }
+
+            return ResponseEntity.ok(new APIResponse("Asignación realizada correctamente", null, false, HttpStatus.OK));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse("Error al asignar artículo al almacén", true, HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
 }

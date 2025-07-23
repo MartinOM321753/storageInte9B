@@ -1,5 +1,6 @@
 package mx.edu.utez.sima.modules.storage;
 
+import mx.edu.utez.sima.modules.category.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -89,4 +90,6 @@ public interface StorageRepository extends JpaRepository< Storage, Long> {
     // Buscar almacenes de una categoría específica que estén activos
     @Query("SELECT s FROM Storage s WHERE s.category.id = :categoryId AND s.status = true")
     List<Storage> findByCategoryIdAndStatusTrue(@Param("categoryId") Long categoryId);
+
+    Optional<Storage> findByCategory(Category techCategory);
 }

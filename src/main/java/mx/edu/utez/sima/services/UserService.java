@@ -1,14 +1,15 @@
 package mx.edu.utez.sima.services;
 
-import mx.edu.utez.sima.modules.user.BeanUser;
+import mx.edu.utez.sima.modules.rol.Rol;
 import mx.edu.utez.sima.modules.rol.RolRepository;
+import mx.edu.utez.sima.modules.user.BeanUser;
 import mx.edu.utez.sima.modules.user.UserRepository;
 import mx.edu.utez.sima.utils.APIResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,31 +22,43 @@ public class UserService {
 
     private static final Logger logger = LogManager.getLogger(UserService.class);
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final RolRepository rolRepository;
 
-    @Autowired
-    private RolRepository rolRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     // Crear usuario
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> createUser(BeanUser user) {
         try {
+
+
             if (userRepository.existsByUsername(user.getUsername())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("Usuario con este username ya existe", true, HttpStatus.CONFLICT));
             }
+
             if (userRepository.existsByEmail(user.getEmail())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("Usuario con este email ya existe", true, HttpStatus.CONFLICT));
             }
 
+            Rol rol = rolRepository.findByName("USER");
+            user.setRol(rol);
             user.setUuid(UUID.randomUUID().toString());
-            user.setActive(true);
-
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             BeanUser saved = userRepository.save(user);
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new APIResponse("Usuario creado exitosamente", saved, false, HttpStatus.CREATED));
+
         } catch (Exception e) {
             logger.error("Error al crear usuario: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -122,30 +135,32 @@ public class UserService {
 
     // Actualizar usuario
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<APIResponse> updateUser(Long id, BeanUser userDetails) {
+    public ResponseEntity<APIResponse> updateUser(BeanUser userDetails) {
         try {
-            BeanUser user = userRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            if (!user.getUsername().equals(userDetails.getUsername()) &&
-                    userRepository.existsByUsername(userDetails.getUsername())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new APIResponse("Usuario con este username ya existe", true, HttpStatus.CONFLICT));
-            }
-            if (!user.getEmail().equals(userDetails.getEmail()) &&
-                    userRepository.existsByEmail(userDetails.getEmail())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new APIResponse("Usuario con este email ya existe", true, HttpStatus.CONFLICT));
-            }
+           BeanUser user = userRepository.findById(userDetails.getId()).get();
 
+
+            if (!userDetails.getUsername().equals(user.getUsername())) {
+
+                if (userRepository.existsByUsername(userDetails.getUsername())) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(new APIResponse("Usuario con este username ya existe", true, HttpStatus.CONFLICT));
+                }
+
+            }
+            if (!userDetails.getEmail().equals(user.getEmail())) {
+                if (userRepository.existsByEmail(userDetails.getEmail())) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(new APIResponse("Usuario con este email ya existe", true, HttpStatus.CONFLICT));
+                }
+            }
+            user.setUuid(UUID.randomUUID().toString());
             user.setUsername(userDetails.getUsername());
             user.setName(userDetails.getName());
             user.setLastName(userDetails.getLastName());
             user.setEmail(userDetails.getEmail());
-
-            if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-                user.setPassword(userDetails.getPassword());
-            }
+            user.setPassword(user.getPassword());
 
             BeanUser updated = userRepository.save(user);
             return ResponseEntity.ok(new APIResponse("Usuario actualizado", updated, false, HttpStatus.OK));
@@ -156,24 +171,6 @@ public class UserService {
         }
     }
 
-    // Asignar rol a usuario
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<APIResponse> assignRole(Long userId, Long roleId) {
-        try {
-            BeanUser user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            user.setRol(rolRepository.findById(roleId)
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado")));
-
-            BeanUser updated = userRepository.save(user);
-            return ResponseEntity.ok(new APIResponse("Rol asignado", updated, false, HttpStatus.OK));
-        } catch (Exception e) {
-            logger.error("Error al asignar rol: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new APIResponse("Error al asignar rol", true, HttpStatus.INTERNAL_SERVER_ERROR));
-        }
-    }
 
     // Activar/desactivar usuario
     @Transactional(rollbackFor = Exception.class)
@@ -215,9 +212,9 @@ public class UserService {
 
     // Obtener usuarios por rol
     @Transactional(readOnly = true)
-    public ResponseEntity<APIResponse> getUsersByRole(Long roleId) {
+    public ResponseEntity<APIResponse> getUsersByRole() {
         try {
-            List<BeanUser> users = userRepository.findByRolId(roleId);
+            List<BeanUser> users = userRepository.findByRolName("USER");
             return ResponseEntity.ok(new APIResponse("Usuarios por rol", users, false, HttpStatus.OK));
         } catch (Exception e) {
             logger.error("Error al obtener usuarios por rol: {}", e.getMessage());
@@ -230,7 +227,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public ResponseEntity<APIResponse> getAvailableWarehouseManagers() {
         try {
-            List<BeanUser> users = userRepository.findByRolNameAndStorageIsNull("RESPONSABLE");
+            List<BeanUser> users = userRepository.findByRolNameAndStorageIsNull("USER");
             return ResponseEntity.ok(new APIResponse("Responsables disponibles", users, false, HttpStatus.OK));
         } catch (Exception e) {
             logger.error("Error al obtener responsables disponibles: {}", e.getMessage());
