@@ -1,18 +1,28 @@
 package mx.edu.utez.sima.modules.user;
 
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
 public class UserDTO {
-
     private Long id;
-
     private String username;
 
     private String password;
-
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚÑñ][a-zA-ZáéíóúÁÉÍÓÚÑñ\\s]{3,}$", message = "Solamente se aceptan letras")
+    @NotNull(message = "Favor de ingresar los datos")
+    @NotBlank(message = "Favor de no dejar los datos en blanco")
     private String name;
-
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚÑñ][a-zA-ZáéíóúÁÉÍÓÚÑñ\\s]{3,}$", message = "Solamente se aceptan letras")
+    @NotNull(message = "Favor de ingresar los datos")
+    @NotBlank(message = "Favor de no dejar los datos en blanco")
     private String lastName;
-
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Ingrensa un correo valido")
+    @NotNull(message = "Favor de ingresar el correo")
+    @NotBlank(message = "Favor de no dejar los datos en blanco")
+    @Email
     private String email;
 
 

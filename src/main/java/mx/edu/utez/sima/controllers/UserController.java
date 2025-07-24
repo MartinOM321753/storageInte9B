@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import mx.edu.utez.sima.modules.user.BeanUser;
 import mx.edu.utez.sima.modules.user.UserDTO;
 import mx.edu.utez.sima.services.UserService;
@@ -32,7 +33,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Error interno del servidor",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = APIResponse.class)))
     })
-    public ResponseEntity<APIResponse> createUser(@RequestBody UserDTO user) {
+    public ResponseEntity<APIResponse> createUser(@Valid @RequestBody UserDTO user) {
         return userService.createUser(user.toEntity());
     }
 
