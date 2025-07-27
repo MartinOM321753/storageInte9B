@@ -1,5 +1,4 @@
 package mx.edu.utez.sima.utils;
-
 import mx.edu.utez.sima.modules.article.Article;
 import mx.edu.utez.sima.modules.category.Category;
 import mx.edu.utez.sima.modules.category.CategoryRepository;
@@ -7,6 +6,7 @@ import mx.edu.utez.sima.modules.rol.Rol;
 import mx.edu.utez.sima.modules.rol.RolRepository;
 import mx.edu.utez.sima.modules.storage.Storage;
 import mx.edu.utez.sima.modules.storage.StorageRepository;
+
 import mx.edu.utez.sima.modules.user.BeanUser;
 import mx.edu.utez.sima.modules.user.UserRepository;
 import mx.edu.utez.sima.services.ArticleService;
@@ -40,13 +40,15 @@ public class InitialConfig implements CommandLineRunner {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
     @Autowired
     private ArticleService articleService;
+
     @Autowired
     private StorageRepository storageRepository;
+
     @Autowired
     private UserRepository userRepository;
-
 
     @Override
     public void run(String... args) throws Exception {
@@ -62,23 +64,20 @@ public class InitialConfig implements CommandLineRunner {
             }
         });
 
-
+        // Creación de usuarios
         List<String> users = Arrays.asList("Admin", "user");
         users.forEach(userName -> {
             BeanUser user = new BeanUser();
             user.setUsername(userName.toLowerCase());
             user.setName(userName);
-            user.setLastName("LastName " + userName);
-            user.setEmail(userName.toLowerCase() + "@example.com");
+            user.setLastName("apellidos");
+            user.setEmail(userName.toLowerCase() + "@gmail.com");
             user.setPassword("password123");
             user.setActive(true);
             user.setRol(rolRepository.findByName(userName.toUpperCase()));
             ResponseEntity<?> respUser = userService.createUser(user);
             System.out.println("Usuario creado: " + user.getUsername() + " - " + respUser.getBody());
-
         });
-
-
 
         // Inserción de categorías iniciales
         List<String> categorias = Arrays.asList(
@@ -95,22 +94,37 @@ public class InitialConfig implements CommandLineRunner {
         // Inserción de registros de storage (usando categoría "Tecnología")
         Optional<Category> techCategoryOpt = categoryRepository.findByCategoryName("Tecnología");
         List<Storage> techStorages = new ArrayList<>();
+
         if (techCategoryOpt.isPresent()) {
             Category techCategory = techCategoryOpt.get();
-            List<String> storageCodes = Arrays.asList("", "");
-          BeanUser  user =  userRepository.findByRolName("USER").getFirst();
+            List<BeanUser> userss = userRepository.findByRolName("USER");
 
-            storageCodes.forEach(code -> {
-                Storage storage = new Storage();
-                storage.setResponsible(user);
-                storage.setCategory(techCategory);
-                ResponseEntity<?> respStorage = storageService.createStorage(storage);
-                APIResponse apiResp = (APIResponse) respStorage.getBody();
-                if (apiResp.getData() instanceof Storage) {
-                    techStorages.add((Storage) apiResp.getData());
+            if (!userss.isEmpty()) {
+                BeanUser user = userss.get(0); // Tomar el primer usuario con rol USER
+
+                // Crear 2 almacenes de ejemplo
+                List<String> storageNames = Arrays.asList("Almacén Tech 1", "Almacén Tech 2");
+
+                for (String storageName : storageNames) {
+                    Storage storage = new Storage();
+                    storage.setCategory(techCategory);
+
+                    // CORRECCIÓN: Usar el usuario completo obtenido de la base de datos
+                    storage.setResponsible(user);
+
+                    ResponseEntity<?> respStorage = storageService.createStorage(storage);
+                    APIResponse apiResp = (APIResponse) respStorage.getBody();
+
+                    if (apiResp != null && apiResp.getData() instanceof Storage) {
+                        techStorages.add((Storage) apiResp.getData());
+                        System.out.println("Almacén insertado exitosamente: " + storageName + " - " + respStorage.getBody());
+                    } else {
+                        System.out.println("Error al insertar almacén: " + storageName + " - " + respStorage.getBody());
+                    }
                 }
-                System.out.println("Almacén insertado: " + code + " - " + respStorage.getBody());
-            });
+            } else {
+                System.out.println("No se encontraron usuarios con rol USER para asignar a los almacenes.");
+            }
         } else {
             System.out.println("No se encontró la categoría Tecnología para asignar a los almacenes.");
         }
@@ -127,8 +141,11 @@ public class InitialConfig implements CommandLineRunner {
 
                 // Se crea el artículo
                 ResponseEntity<APIResponse> respArticle = articleService.createArticle(article);
-                APIResponse articleApiResp = (APIResponse) respArticle.getBody();
-                if (articleApiResp.getData() instanceof Article && !techStorages.isEmpty()) {
+                APIResponse articleApiResp = respArticle.getBody();
+
+                if (articleApiResp != null  &&
+                        articleApiResp.getData() instanceof Article && !techStorages.isEmpty()) {
+
                     Article savedArticle = (Article) articleApiResp.getData();
                     // Se asignan 5 unidades del artículo al primer almacén disponible
                     ResponseEntity<APIResponse> assignResp = articleService.assignArticleToStorage(
@@ -141,7 +158,7 @@ public class InitialConfig implements CommandLineRunner {
             }
         }
 
-        // Creaci\\ón de 5 art\\u00edculos con categor\\ía diferente ("Materia")
+        // Creación de 5 artículos con categoría diferente ("Materia")
         Optional<Category> otherCategoryOpt = categoryRepository.findByCategoryName("Materia");
         if (otherCategoryOpt.isPresent()) {
             Category otherCategory = otherCategoryOpt.get();
@@ -151,12 +168,13 @@ public class InitialConfig implements CommandLineRunner {
                 article.setDescription("Descripción del articulo Materia " + i);
                 article.setQuantity(50L);
                 article.setCategory(otherCategory);
-                // No se asigna almacen
+
+                // No se asigna almacén
                 ResponseEntity<?> respArticle = articleService.createArticle(article);
-                System.out.println("articulo creado (sin almacén): Articulo Materia " + i + " - " + respArticle.getBody());
+                System.out.println("Articulo creado (sin almacén): Articulo Materia " + i + " - " + respArticle.getBody());
             }
         } else {
-            System.out.println("No se encontro la categoria 'Materia' para los articulos sin asignar a almacenes.");
+            System.out.println("No se encontró la categoría 'Materia' para los artículos sin asignar a almacenes.");
         }
     }
 }

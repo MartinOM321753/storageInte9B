@@ -41,8 +41,6 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public APIResponse doLogin(LoginRequestDTO payload){
-
-
         try {
             BeanUser found = userRepository.findByUsername(payload.getUsername())
                     .orElse(null);
@@ -63,9 +61,8 @@ public class AuthService {
                 );
             }
 
-
-            UserDetails ud = udService.loadUserByUsername(found.getUsername());
-            String token = jwtUtils.generateToken(ud);
+            // Aquí usas el método que genera token con tu BeanUser completo
+            String token = jwtUtils.generateToken(found);
 
             if (found.getTemporal_password() == true){
                 return new APIResponse(

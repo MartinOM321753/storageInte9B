@@ -14,7 +14,6 @@ import mx.edu.utez.sima.utils.APIResponse;
 import mx.edu.utez.sima.utils.GenerateCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -52,45 +51,59 @@ public class StorageService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> createStorage(Storage storage) {
         try {
+            // Buscar responsable Y categoría ** por ID/UUID, NO usar las instancias del parámetro recibido
+            String responsibleUuid = storage.getResponsible() != null ? storage.getResponsible().getUuid() : null;
+            Long categoryId = storage.getCategory() != null ? storage.getCategory().getId() : null;
 
-            Optional<BeanUser> responsible = userRepository.findByUuidAndRol_Name(storage.getResponsible().getUuid(),"USER");
-            Optional<Category> category =  categoryRepository.findById(storage.getCategory().getId());
+            Optional<BeanUser> responsible = userRepository.findByUuidAndRol_Name(responsibleUuid, "USER");
+            Optional<Category> category = categoryRepository.findById(categoryId);
 
-
+            // Validaciones
             if (responsible.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new APIResponse("El responsable no existe", true, HttpStatus.BAD_REQUEST));
             }
-
-            if (responsible.get().getActive() == false) {
+            if (!responsible.get().getActive()) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("Responsable inactivo", true, HttpStatus.CONFLICT));
             }
-
-            if (responsible.get().getStorage() != null && !responsible.get().getStorage().getId().equals(storage.getId())) {
+            if (responsible.get().getStorage() != null 
+            && !responsible.get().getStorage().getId().equals(storage.getId())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("El responsable ya está asignado a otro almacén", true, HttpStatus.CONFLICT));
             }
-
             if (category.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new APIResponse("Categoría no encontrada", true, HttpStatus.BAD_REQUEST));
             }
 
-
+            // Usar SOLO instancias managed para las relaciones
             storage.setUuid(UUID.randomUUID().toString());
             storage.setStatus(true);
-            storage.setResponsible(responsible.get());
+            storage.setCategory(category.get());
+            storage.setResponsible(null); // No asignar responsable por ahora
+
+            // Guardar storage primero
             Storage saved = storageRepository.save(storage);
 
+            // Generar identificador y asignar
             String generatedIdentifier = GenerateCode.generateStorageIdentifier(saved.getId());
             saved.setStorageIdentifier(generatedIdentifier);
 
-            Storage updated = storageRepository.save(saved);
+            // Configura la relación bidireccional usando managed instance
+            BeanUser responsibleUser = responsible.get();
+            saved.setResponsible(responsibleUser);
+            responsibleUser.setStorage(saved);
+
+            // Guardar ambas entidades. Primero el storage, luego el usuario
+            Storage updated = storageRepository.saveAndFlush(saved);
+            userRepository.saveAndFlush(responsibleUser);
+
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new APIResponse("Almacén creado exitosamente", updated, false, HttpStatus.CREATED));
+                .body(new APIResponse("Almacén creado exitosamente", updated, false, HttpStatus.CREATED));
+
         } catch (Exception e) {
-            logger.error("Error al crear almacén: {}", e.getMessage());
+            logger.error("Error al crear almacén: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al crear almacén", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
@@ -238,11 +251,6 @@ public class StorageService {
     }
 
 
-
-
-
-
-
     // Cambiar estado de almacén
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> toggleStorageStatus(Long id) {
@@ -264,18 +272,33 @@ public class StorageService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> deleteStorage(Long id) {
         try {
-            Storage storage = storageRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado"));
+            Optional<Storage> findStorage = storageRepository.findById(id);
+            if (findStorage.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new APIResponse("Almacén no encontrado", true, HttpStatus.NOT_FOUND));
+            }
+            Storage storage = findStorage.get();
 
             if (!storage.getArticles().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new APIResponse("No se puede eliminar un almacén que tiene artículos", true, HttpStatus.CONFLICT));
             }
 
-            storageRepository.delete(storage);
+            List<StorageHasArticle> relaciones = storageHasArticleRepository.findByStorageId(storage.getId());
+            storageHasArticleRepository.deleteAll(relaciones);
+
+            BeanUser user = storage.getResponsible();
+            if (user != null) {
+                user.setStorage(null);
+                userRepository.saveAndFlush(user);
+            }
+            storage.setResponsible(null);
+
+            storageRepository.deleteById(storage.getId());
+
             return ResponseEntity.ok(new APIResponse("Almacén eliminado", false, HttpStatus.OK));
         } catch (Exception e) {
-            logger.error("Error al eliminar almacén: {}", e.getMessage());
+            logger.error("Error al eliminar almacén:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al eliminar almacén", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
@@ -340,16 +363,25 @@ public class StorageService {
 
 
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<APIResponse> removeArticleToStorage(Long articleId, Long storageId, Long assignQuantity) {
+    public ResponseEntity<APIResponse> removeArticleToStorage(Long storageId, Long articleId, Long assignQuantity) {
         try {
-            Article article = articleRepository.findById(articleId)
-                    .orElseThrow(() -> new RuntimeException("Artículo no encontrado"));
-            Storage storage = storageRepository.findById(storageId)
-                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado"));
+            Optional<Article> articleOpt = articleRepository.findById(articleId);
+            if (articleOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new APIResponse("Artículo no encontrado", true, HttpStatus.NOT_FOUND));
+            }
+            Article article = articleOpt.get();
+
+            Optional<Storage> storageOpt = storageRepository.findById(storageId);
+            if (storageOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new APIResponse("Almacén no encontrado", true, HttpStatus.NOT_FOUND));
+            }
+            Storage storage = storageOpt.get();
 
             List<StorageHasArticle> storedArticles = storageHasArticleRepository.findByArticleIdAndStorageId(articleId, storageId);
 
-            if (assignQuantity <= 0) {
+            if (assignQuantity == null || assignQuantity <= 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new APIResponse("La cantidad a asignar debe ser mayor a 0", true, HttpStatus.BAD_REQUEST));
             }
@@ -367,8 +399,8 @@ public class StorageService {
             }
 
             return ResponseEntity.ok(new APIResponse("Artículos devueltos correctamente a la bodega principal", null, false, HttpStatus.OK));
-
         } catch (Exception e) {
+            logger.error("Error al eliminar el artículo del almacén: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al eliminar el artículo del almacén", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }

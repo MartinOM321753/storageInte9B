@@ -9,4 +9,6 @@ public interface StorageHasArticleRepository extends JpaRepository<StorageHasArt
 
     List<StorageHasArticle> findByArticleIdAndStorageId(Long article, Long storage);
 
+    List<StorageHasArticle> findByStorageId(Long storageId);
+
 }

@@ -137,9 +137,19 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> updateUser(BeanUser userDetails) {
         try {
+            if (userDetails.getId() == null) {
+                // Validación agregada para evitar excepciones por id nulo
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new APIResponse("El ID del usuario es requerido para actualizar.", true, HttpStatus.BAD_REQUEST));
+            }
 
-           BeanUser user = userRepository.findById(userDetails.getId()).get();
+            Optional<BeanUser> optional = userRepository.findById(userDetails.getId());
+            if (optional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new APIResponse("Usuario no encontrado", true, HttpStatus.NOT_FOUND));
+            }
 
+            BeanUser user = optional.get();
 
             if (!userDetails.getUsername().equals(user.getUsername())) {
 
@@ -155,7 +165,7 @@ public class UserService {
                             .body(new APIResponse("Usuario con este email ya existe", true, HttpStatus.CONFLICT));
                 }
             }
-            user.setUuid(UUID.randomUUID().toString());
+
             user.setUsername(userDetails.getUsername());
             user.setName(userDetails.getName());
             user.setLastName(userDetails.getLastName());
@@ -165,7 +175,7 @@ public class UserService {
             BeanUser updated = userRepository.save(user);
             return ResponseEntity.ok(new APIResponse("Usuario actualizado", updated, false, HttpStatus.OK));
         } catch (Exception e) {
-            logger.error("Error al actualizar usuario: {}", e.getMessage());
+            logger.error("Error al actualizar usuario: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al actualizar usuario", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }

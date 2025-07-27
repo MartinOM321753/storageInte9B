@@ -28,7 +28,7 @@ public class Storage {
     private Boolean status;
 
 
-    @OneToOne()
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "responsible_id", unique = true)
     private BeanUser responsible;
 

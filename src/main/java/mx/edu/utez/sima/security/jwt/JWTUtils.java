@@ -3,6 +3,7 @@ package mx.edu.utez.sima.security.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import mx.edu.utez.sima.modules.user.BeanUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class JWTUtils {
     // Es decir, el cuerpo del token
     public Claims exctractAllClaims(String token){
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(SECRET_KEY.getBytes())
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -56,17 +57,23 @@ public class JWTUtils {
 
     // Esta funcion nos ayuda a crear nuestro token
     private String createToken(Map<String, Object> claims, String subject){
-        return Jwts.builder() // Aquí decimos que vamos a construir un token
-                .setClaims(claims).setSubject(subject) // Aquí mandamos la información del usuario
-                .setIssuedAt(new Date(System.currentTimeMillis())) // Aquí le decimos cuando se creó el token
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Cuanto va a durar
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // Aquí lo firmamos
-                .compact(); // Terminamos por compactar el token
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
+                .compact();
     }
 
     // Esta funcion consume la funcion de crear solo para retornar
-    public String generateToken(UserDetails userDetails){
+    public String generateToken(BeanUser user){
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
+        claims.put("id", user.getId());
+        claims.put("username", user.getUsername());
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRol().getName()); // Ajusta según tu entidad
+
+        return createToken(claims, user.getUsername());
     }
 }

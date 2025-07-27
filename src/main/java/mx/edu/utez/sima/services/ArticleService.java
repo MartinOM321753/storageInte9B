@@ -9,7 +9,9 @@ import mx.edu.utez.sima.modules.storage.StorageRepository;
 import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticle;
 import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticleRepository;
 import mx.edu.utez.sima.utils.APIResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import java.util.UUID;
 @Service
 public class ArticleService {
 
+    private static final Logger log = LoggerFactory.getLogger(ArticleService.class);
     private final ArticleRepository articleRepository;
 
     private final CategoryRepository categoryRepository;
@@ -44,6 +47,7 @@ public class ArticleService {
 
             Optional<Article> foundArticle=  articleRepository.findByArticleName(article.getArticleName());
             Optional<Category> category =  categoryRepository.findById(article.getCategory().getId());
+
             if (foundArticle.isPresent()) {
                 return ResponseEntity.badRequest().body(new APIResponse("El artículo ya existe", true, HttpStatus.BAD_REQUEST));
             }
@@ -62,6 +66,7 @@ public class ArticleService {
             Article saved = articleRepository.save(article);
             return ResponseEntity.ok(new APIResponse("Artículo creado correctamente", saved, false, HttpStatus.OK));
         } catch (Exception e) {
+            log.error("Error al crear el artículo", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new APIResponse("Error al crear el artículo", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
@@ -137,7 +142,12 @@ public class ArticleService {
                     return ResponseEntity.badRequest().body(new APIResponse("El nombre del artículo ya existe", true, HttpStatus.BAD_REQUEST));
                 }
             }
-
+            if (!article.getStorages().isEmpty() &&
+                    !article.getCategory().getId().equals(articleDetails.getCategory().getId())) {
+                return ResponseEntity.badRequest().body(
+                        new APIResponse("No se puede cambiar la categoría de un artículo que ya se encuentra en un almacén", true, HttpStatus.BAD_REQUEST)
+                );
+            }
             article.setArticleName(articleDetails.getArticleName());
             article.setDescription(articleDetails.getDescription());
             article.setQuantity(articleDetails.getQuantity());
@@ -150,6 +160,7 @@ public class ArticleService {
             Article updated = articleRepository.save(article);
             return ResponseEntity.ok(new APIResponse("Artículo actualizado", updated, false, HttpStatus.OK));
         } catch (Exception e) {
+            log.error("Error al actualizar el artículo", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al actualizar el artículo", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
