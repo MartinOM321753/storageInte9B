@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import mx.edu.utez.sima.modules.article.ArticleDTO;
 import mx.edu.utez.sima.services.ArticleService;
 import mx.edu.utez.sima.utils.APIResponse;
@@ -29,7 +30,7 @@ public class ArticleController {
             @ApiResponse(responseCode = "200", description = "Artículo creado exitosamente"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<APIResponse> createArticle(@RequestBody ArticleDTO article) {
+    public ResponseEntity<APIResponse> createArticle (@Valid @RequestBody ArticleDTO article) {
         return articleService.createArticle(article.toEntity());
     }
 

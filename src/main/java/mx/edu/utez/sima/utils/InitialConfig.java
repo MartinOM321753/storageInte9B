@@ -18,10 +18,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Configuration
 public class InitialConfig implements CommandLineRunner {
@@ -44,8 +41,6 @@ public class InitialConfig implements CommandLineRunner {
     @Autowired
     private ArticleService articleService;
 
-    @Autowired
-    private StorageRepository storageRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -53,31 +48,46 @@ public class InitialConfig implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        // Inicialización de roles
-        List<String> roles = Arrays.asList("ADMIN", "USER");
-        roles.forEach(roleName -> {
-            if (!rolRepository.existsByName(roleName)) {
-                Rol rol = new Rol();
-                rol.setName(roleName);
-                rolRepository.save(rol);
-                System.out.println("Rol creado: " + roleName);
-            }
-        });
 
-        // Creación de usuarios
-        List<String> users = Arrays.asList("Admin", "user");
-        users.forEach(userName -> {
-            BeanUser user = new BeanUser();
-            user.setUsername(userName.toLowerCase());
-            user.setName(userName);
-            user.setLastName("apellidos");
-            user.setEmail(userName.toLowerCase() + "@gmail.com");
-            user.setPassword("password123");
-            user.setActive(true);
-            user.setRol(rolRepository.findByName(userName.toUpperCase()));
-            ResponseEntity<?> respUser = userService.createUser(user);
-            System.out.println("Usuario creado: " + user.getUsername() + " - " + respUser.getBody());
-        });
+        // Creamos los roles con nombre y los guardamos si no existen
+        Rol rolAdmin = rolRepository.findByName("ADMIN");
+        if (rolAdmin == null) {
+            rolAdmin = new Rol();
+            rolAdmin.setName("ADMIN");
+            rolAdmin = rolRepository.save(rolAdmin);
+        }
+
+        Rol rolUser = rolRepository.findByName("USER");
+        if (rolUser == null) {
+            rolUser = new Rol();
+            rolUser.setName("USER");
+            rolUser = rolRepository.save(rolUser);
+        }
+
+// Creamos los usuarios y les asignamos el rol correcto manualmente
+        BeanUser admin = new BeanUser();
+        admin.setUsername("admin");
+        admin.setName("Admin");
+        admin.setLastName("Apellidos");
+        admin.setEmail("admin@gmail.com");
+        admin.setPassword("password123");
+        admin.setActive(true);
+        admin.setRol(rolAdmin);
+        ResponseEntity<?> respAdmin = userService.createUser(admin);
+        System.out.println(" Usuario creado: admin - " + respAdmin.getBody());
+
+        BeanUser users = new BeanUser();
+        users.setUsername("user");
+        users.setName("User");
+        users.setLastName("Apellidos");
+        users.setEmail("user@gmail.com");
+        users.setPassword("password123");
+        users.setActive(true);
+        users.setRol(rolUser);
+        ResponseEntity<?> respUser = userService.createUser(users);
+        System.out.println(" Usuario creado: user - " + respUser.getBody());
+
+
 
         // Inserción de categorías iniciales
         List<String> categorias = Arrays.asList(

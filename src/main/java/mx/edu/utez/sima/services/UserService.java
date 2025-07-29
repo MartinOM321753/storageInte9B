@@ -1,10 +1,12 @@
 package mx.edu.utez.sima.services;
 
+import mx.edu.utez.sima.modules.Email.Emails;
 import mx.edu.utez.sima.modules.rol.Rol;
 import mx.edu.utez.sima.modules.rol.RolRepository;
 import mx.edu.utez.sima.modules.user.BeanUser;
 import mx.edu.utez.sima.modules.user.UserRepository;
 import mx.edu.utez.sima.utils.APIResponse;
+import mx.edu.utez.sima.utils.GenerateCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Gatherer;
 
 @Service
 public class UserService {
@@ -24,21 +27,35 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RolRepository rolRepository;
-
-
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    public UserService(UserRepository userRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.userRepository = userRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
-    // Crear usuario
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> createUser(BeanUser user) {
         try {
+            // Generar username si no viene desde frontend
+            if (user.getUsername() == null || user.getUsername().isBlank()) {
+                String generatedUsername;
+                int intentos = 0;
 
+                do {
+                    generatedUsername = GenerateCode.generateUsername(user.getName(), user.getLastName());
+                    intentos++;
+                    if (intentos > 10) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(new APIResponse("No se pudo generar un username único", true, HttpStatus.INTERNAL_SERVER_ERROR));
+                    }
+                } while (userRepository.existsByUsername(generatedUsername));
+
+                user.setUsername(generatedUsername);
+            }
 
             if (userRepository.existsByUsername(user.getUsername())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -50,11 +67,17 @@ public class UserService {
                         .body(new APIResponse("Usuario con este email ya existe", true, HttpStatus.CONFLICT));
             }
 
+            String newPass = GenerateCode.generatePassword();
+
+            Emails email = new Emails(user.getEmail(), newPass, user.getUsername());
             Rol rol = rolRepository.findByName("USER");
             user.setRol(rol);
             user.setUuid(UUID.randomUUID().toString());
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+            user.setPassword(passwordEncoder.encode(newPass));
             BeanUser saved = userRepository.save(user);
+
+            emailService.sendEmail(email, 2);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new APIResponse("Usuario creado exitosamente", saved, false, HttpStatus.CREATED));
@@ -65,6 +88,7 @@ public class UserService {
                     .body(new APIResponse("Error al crear usuario", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+
 
     // Obtener todos los usuarios
     @Transactional(readOnly = true)
@@ -258,4 +282,32 @@ public class UserService {
                     .body(new APIResponse("Error al obtener usuarios activos", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+    // Dentro de UserService
+
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<APIResponse> changePassword(Long userId, String currentPassword, String newPassword) {
+        try {
+            Optional<BeanUser> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new APIResponse("Usuario no encontrado", true, HttpStatus.NOT_FOUND));
+            }
+            BeanUser user = optionalUser.get();
+
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new APIResponse("La contraseña actual no es correcta", true, HttpStatus.UNAUTHORIZED));
+            }
+
+            user.setTemporal_password(false);
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.saveAndFlush(user);
+            return ResponseEntity.ok(new APIResponse("Contraseña actualizada exitosamente", false, HttpStatus.OK));
+        } catch (Exception e) {
+            logger.error("Error al cambiar la contraseña: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse("Error al cambiar la contraseña", true, HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
 }

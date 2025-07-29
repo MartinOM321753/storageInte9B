@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import mx.edu.utez.sima.services.CategoryService;
 import mx.edu.utez.sima.utils.APIResponse;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Categoría creada exitosamente"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<APIResponse> createCategory(@RequestParam String category) {
+    public ResponseEntity<APIResponse> createCategory(@Valid @RequestParam String category) {
         return categoryService.createCategory(category);
     }
 

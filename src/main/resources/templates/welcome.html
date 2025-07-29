@@ -2,7 +2,7 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
-    <title>Restablecimiento de Contraseña - SIMA</title>
+    <title>Bienvenido a SIMA</title>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -46,6 +46,24 @@
             background: linear-gradient(135deg, #16423C 0%, #6A9C89 100%);
             padding: 40px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
         }
 
         .logo {
@@ -59,6 +77,8 @@
             margin-bottom: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
         .logo-text {
@@ -70,16 +90,35 @@
 
         .header-title {
             color: white;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             margin-bottom: 8px;
             letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
         }
 
         .header-subtitle {
             color: rgba(255, 255, 255, 0.9);
             font-size: 16px;
             font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .content {
@@ -95,6 +134,11 @@
             letter-spacing: -0.5px;
         }
 
+        .user-name {
+            color: #16423C;
+            font-weight: 700;
+        }
+
         .message-text {
             color: #4b5563;
             font-size: 16px;
@@ -103,7 +147,7 @@
             text-align: center;
         }
 
-        .password-container {
+        .credentials-container {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border: 2px solid #16423C;
             border-radius: 12px;
@@ -114,7 +158,7 @@
             overflow: hidden;
         }
 
-        .password-container::before {
+        .credentials-container::before {
             content: '';
             position: absolute;
             top: 0;
@@ -124,26 +168,86 @@
             background: linear-gradient(90deg, #16423C 0%, #6A9C89 100%);
         }
 
-        .password-label {
+        .credentials-title {
             color: #16423C;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .password-value {
+        .credential-item {
+            margin-bottom: 16px;
+        }
+
+        .credential-label {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .credential-value {
             color: #16423C;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            padding: 12px 20px;
+            padding: 8px 16px;
             background: rgba(22, 66, 60, 0.1);
-            border-radius: 8px;
+            border-radius: 6px;
             display: inline-block;
             border: 1px solid rgba(22, 66, 60, 0.2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .password-value {
+            font-size: 24px;
+            letter-spacing: 2px;
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        .steps-section {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+        }
+
+        .steps-title {
+            color: #065f46;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            color: #047857;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .step-number {
+            background: #10b981;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
         .warning-section {
@@ -200,6 +304,21 @@
             margin: 30px 0;
         }
 
+        .support-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .support-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .email-container {
@@ -215,7 +334,7 @@
             }
 
             .header-title {
-                font-size: 24px;
+                font-size: 28px;
             }
 
             .message-title {
@@ -258,51 +377,88 @@
             <div class="logo">
                 <span class="logo-text">SIMA</span>
             </div>
-            <h1 class="header-title">Restablecimiento de Contraseña</h1>
+            <h1 class="header-title">¡Bienvenido al Sistema!</h1>
             <p class="header-subtitle">Sistema de Información y Manejo Administrativo</p>
         </div>
 
         <!-- Content -->
         <div class="content">
-            <h2 class="message-title">Nueva Contraseña Temporal</h2>
+            <h2 class="message-title">
+                ¡Hola <span class="user-name" th:text="${userName}">Usuario</span>!
+            </h2>
 
             <p class="message-text">
-                Hemos recibido una solicitud para restablecer tu contraseña.
-                Se te ha asignado una contraseña temporal para que puedas acceder
-                a tu perfil y establecer una nueva que te resulte fácil de recordar.
+                Te damos la bienvenida a SIMA. Tu cuenta ha sido creada exitosamente
+                y ya puedes acceder al sistema con las credenciales que encontrarás a continuación.
             </p>
 
-            <div class="password-container">
-                <div class="password-label">Tu nueva contraseña temporal es:</div>
-                <div class="password-value" th:text="${message}"></div>
+            <div class="credentials-container">
+                <div class="credentials-title">Tus credenciales de acceso</div>
+
+                <div class="credential-item">
+                    <div class="credential-label">Usuario:</div>
+                    <div class="credential-value" th:text="${name}"></div>
+                </div>
+
+                <div class="credential-item">
+                    <div class="credential-label">Contraseña temporal:</div>
+                    <div class="credential-value password-value" th:text="${message}"></div>
+                </div>
+            </div>
+
+            <div class="steps-section">
+                <div class="steps-title">Primeros pasos para comenzar</div>
+
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div>Accede al sistema con las credenciales proporcionadas</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div>El sistema te pedirá cambiar tu contraseña temporal</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div>Establece una contraseña segura que puedas recordar fácilmente</div>
+                </div>
+
             </div>
 
             <div class="divider"></div>
 
             <div class="warning-section">
-                <div class="warning-icon">⚠️</div>
-                <div class="warning-title">Importante - Medidas de Seguridad</div>
+                <div class="warning-icon">🔐</div>
+                <div class="warning-title">Importante - Seguridad de tu cuenta</div>
                 <div class="warning-text">
-                    Por tu seguridad, no compartas esta contraseña con nadie y
-                    cámbiala lo más pronto posible una vez que accedas al sistema.
+                    Por tu seguridad, no compartas estas credenciales con nadie.
+                    La contraseña temporal debe ser cambiada en tu primer inicio de sesión.
                 </div>
             </div>
 
             <p class="message-text">
-                Una vez que inicies sesión con esta contraseña temporal,
-                el sistema te pedirá que establezcas una nueva contraseña segura.
+                Estamos emocionados de tenerte como parte de nuestro sistema.
+                Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
             </p>
+
+            <div class="support-section">
+                <div class="support-text">
+                    <strong>¿Necesitas ayuda?</strong><br>
+                    Si tienes problemas para acceder o alguna consulta,
+                    contacta con el administrador del sistema.
+                </div>
+            </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
             <p class="footer-text">
                 Este correo fue generado automáticamente por el sistema SIMA.
-                Si no solicitaste este cambio de contraseña, contacta inmediatamente
-                con el administrador del sistema.
+                Guarda este correo en un lugar seguro para futuras referencias.
             </p>
             <div class="company-info">
-                Sistema SIMA
+                Sistema SIMA - Bienvenido a bordo
             </div>
         </div>
     </div>

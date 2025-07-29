@@ -1,9 +1,7 @@
 package mx.edu.utez.sima.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.security.SecureRandom;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,15 +30,34 @@ public class GenerateCode {
         for (int i = 3; i < PASSWORD_LENGTH; i++) {
             password.append(ALL_CHARACTERS.charAt(random.nextInt(ALL_CHARACTERS.length())));
         }
+
         List<Character> passwordChars = new ArrayList<>();
         for (char c : password.toString().toCharArray()) {
             passwordChars.add(c);
         }
         Collections.shuffle(passwordChars);
+
         StringBuilder finalPassword = new StringBuilder();
         for (char c : passwordChars) {
             finalPassword.append(c);
         }
+
         return finalPassword.toString();
+    }
+
+    public static String generateUsername(String nombre, String apellido) {
+        SecureRandom random = new SecureRandom();
+        String cleanName = nombre.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        String cleanApellido = apellido.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        int number = random.nextInt(900) + 100; // número de 3 dígitos
+        return cleanName + cleanApellido.charAt(0) + number;
+    }
+
+
+    private static String normalize(String input) {
+        if (input == null) return "";
+
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        return normalized.replaceAll("[^a-zA-Z]", ""); // Solo letras
     }
 }

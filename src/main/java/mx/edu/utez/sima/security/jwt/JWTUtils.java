@@ -66,10 +66,10 @@ public class JWTUtils {
                 .compact();
     }
 
-    // Esta funcion consume la funcion de crear solo para retornar
     public String generateToken(BeanUser user){
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", user.getId());
+        claims.put("temporal_password", user.getTemporal_password());
         claims.put("username", user.getUsername());
         claims.put("email", user.getEmail());
         claims.put("role", user.getRol().getName()); // Ajusta según tu entidad
