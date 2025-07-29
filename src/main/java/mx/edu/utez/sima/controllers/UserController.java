@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import mx.edu.utez.sima.modules.user.ChangePasswordRequest;
 import mx.edu.utez.sima.modules.user.UserDTO;
 import mx.edu.utez.sima.services.UserService;
 import mx.edu.utez.sima.utils.APIResponse;
@@ -167,4 +168,25 @@ public class UserController {
     public ResponseEntity<APIResponse> getActiveUsers() {
         return userService.getActiveUsers();
     }
+
+    // Dentro de UserController
+
+    @PutMapping("/change-password")
+    @Operation(summary = "Cambiar contraseña", description = "Permite cambiar la contraseña del usuario")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contraseña cambiada exitosamente",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = APIResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Contraseña actual incorrecta",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = APIResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = APIResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = APIResponse.class)))
+    })
+    public ResponseEntity<APIResponse> changePassword(@RequestBody ChangePasswordRequest request) {
+        return userService.changePassword(request.getUserId(), request.getCurrentPassword(), request.getNewPassword());
+    }
+
+
+
 }

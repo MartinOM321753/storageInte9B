@@ -24,8 +24,10 @@ public class Category {
 
     @Column(name = "uuid", nullable = false, unique = true)
     private String uuid;
-    @Pattern(regexp = "^[a-zA-Z\\s]{3,}$", message = "El nombre de la categoría solo puede contener letras, números y espacios")
-    @Size(max = 100, message = "El nombre de la categoría no puede exceder los 100 caracteres")
+    @Pattern(
+            regexp = "^[\\p{L}\\d\\s]{3,}$",
+            message = "El nombre de la categoría solo puede contener letras, números y espacios"
+    )    @Size(max = 100, message = "El nombre de la categoría no puede exceder los 100 caracteres")
     @NotNull(message = "El nombre de la categoría es obligatorio")
     @Column(name = "category_name", nullable = false, unique = true, length = 100)
     private String categoryName;

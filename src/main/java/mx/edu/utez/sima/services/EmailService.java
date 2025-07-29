@@ -33,9 +33,9 @@ public class EmailService {
             Context context = new Context();
 
             context.setVariable("message", email.getMensaje());
-            context.setVariable("name", email.getDestinatario());
+            context.setVariable("name", email.getSubject());
 
-            String[] plantillaAlerta = new String[]{"verificacion","email","alerta"};
+            String[] plantillaAlerta = new String[]{"verify","email","welcome"};
 
             String htmlContent = templateEngine.process(plantillaAlerta[plantilla], context);
 
