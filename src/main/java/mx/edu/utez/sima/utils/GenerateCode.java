@@ -1,7 +1,6 @@
 package mx.edu.utez.sima.utils;
 
 import java.security.SecureRandom;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,13 +50,5 @@ public class GenerateCode {
         String cleanApellido = apellido.replaceAll("[^a-zA-Z]", "").toLowerCase();
         int number = random.nextInt(900) + 100; // número de 3 dígitos
         return cleanName + cleanApellido.charAt(0) + number;
-    }
-
-
-    private static String normalize(String input) {
-        if (input == null) return "";
-
-        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-        return normalized.replaceAll("[^a-zA-Z]", ""); // Solo letras
     }
 }
