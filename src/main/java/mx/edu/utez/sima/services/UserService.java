@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Gatherer;
 
 @Service
 public class UserService {
@@ -40,7 +39,6 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<APIResponse> createUser(BeanUser user) {
         try {
-            // Generar username si no viene desde frontend
             if (user.getUsername() == null || user.getUsername().isBlank()) {
                 String generatedUsername;
                 int intentos = 0;
@@ -73,6 +71,8 @@ public class UserService {
             Rol rol = rolRepository.findByName("USER");
             user.setRol(rol);
             user.setUuid(UUID.randomUUID().toString());
+
+            logger.warn("{} Password: \u001B[31m{}\u001B[0m", user.getUsername(), newPass);
 
             user.setPassword(passwordEncoder.encode(newPass));
             BeanUser saved = userRepository.save(user);
