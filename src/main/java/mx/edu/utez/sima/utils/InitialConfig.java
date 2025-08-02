@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
@@ -42,37 +43,39 @@ public class InitialConfig implements CommandLineRunner {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
 
 
-        // Creamos los roles con nombre y los guardamos si no existen
         Rol rolAdmin = rolRepository.findByName("ADMIN");
         if (rolAdmin == null) {
             rolAdmin = new Rol();
             rolAdmin.setName("ADMIN");
-            rolAdmin = rolRepository.save(rolAdmin);
+             rolRepository.saveAndFlush(rolAdmin);
         }
 
         Rol rolUser = rolRepository.findByName("USER");
         if (rolUser == null) {
             rolUser = new Rol();
             rolUser.setName("USER");
-            rolUser = rolRepository.save(rolUser);
+            rolUser = rolRepository.saveAndFlush(rolUser);
         }
 
-// Creamos los usuarios y les asignamos el rol correcto manualmente
+        Rol adminrol = rolRepository.findByName("ADMIN");
         BeanUser admin = new BeanUser();
         admin.setUsername("admin");
         admin.setName("Admin");
+        admin.setUuid( UUID.randomUUID().toString());
         admin.setLastName("Apellidos");
         admin.setEmail("admin@gmail.com");
-        admin.setPassword("password123");
+        admin.setPassword(passwordEncoder.encode("password123"));
         admin.setActive(true);
-        admin.setRol(rolAdmin);
-        ResponseEntity<?> respAdmin = userService.createUser(admin);
-        System.out.println(" Usuario creado: admin - " + respAdmin.getBody());
+        admin.setRol(adminrol);
+        BeanUser respAdmin = userRepository.saveAndFlush(admin);
+        System.out.println(" Usuario creado: admin - " + respAdmin );
 
         BeanUser users = new BeanUser();
         users.setUsername("user");
