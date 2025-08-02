@@ -66,16 +66,21 @@ public class InitialConfig implements CommandLineRunner {
 
         Rol adminrol = rolRepository.findByName("ADMIN");
         BeanUser admin = new BeanUser();
-        admin.setUsername("admin");
-        admin.setName("Admin");
-        admin.setUuid( UUID.randomUUID().toString());
-        admin.setLastName("Apellidos");
-        admin.setEmail("admin@gmail.com");
-        admin.setPassword(passwordEncoder.encode("password123"));
-        admin.setActive(true);
-        admin.setRol(adminrol);
-        BeanUser respAdmin = userRepository.saveAndFlush(admin);
-        System.out.println(" Usuario creado: admin - " + respAdmin );
+       Optional <BeanUser> userAdmin = userRepository.findByUsername("admin");
+        if (userAdmin.isEmpty()) {
+            admin.setUsername("admin");
+            admin.setName("Admin");
+            admin.setUuid( UUID.randomUUID().toString());
+            admin.setLastName("Apellidos");
+            admin.setEmail("admin@gmail.com");
+            admin.setPassword(passwordEncoder.encode("password123"));
+            admin.setActive(true);
+            admin.setRol(adminrol);
+            BeanUser respAdmin = userRepository.saveAndFlush(admin);
+            System.out.println(" Usuario creado: admin - " + respAdmin );
+
+        }
+
 
         BeanUser users = new BeanUser();
         users.setUsername("user");
