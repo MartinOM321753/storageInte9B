@@ -8,6 +8,8 @@ import mx.edu.utez.sima.modules.category.CategoryRepository;
 import mx.edu.utez.sima.modules.storage.StorageRepository;
 import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticle;
 import mx.edu.utez.sima.modules.storageHasArticle.StorageHasArticleRepository;
+import mx.edu.utez.sima.modules.user.BeanUser;
+import mx.edu.utez.sima.modules.user.UserRepository;
 import mx.edu.utez.sima.utils.APIResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +34,14 @@ public class ArticleService {
     private final StorageRepository storageRepository;
 
     private final StorageHasArticleRepository storageHasArticleRepository;
+    private final UserRepository userRepository;
 
-    public ArticleService(ArticleRepository articleRepository, CategoryRepository categoryRepository, StorageRepository storageRepository, StorageHasArticleRepository storageHasArticleRepository) {
+    public ArticleService(ArticleRepository articleRepository, CategoryRepository categoryRepository, StorageRepository storageRepository, StorageHasArticleRepository storageHasArticleRepository, UserRepository userRepository) {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
         this.storageRepository = storageRepository;
         this.storageHasArticleRepository = storageHasArticleRepository;
+        this.userRepository = userRepository;
     }
 
 
@@ -238,6 +242,21 @@ public class ArticleService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse("Error al asignar categoría", true, HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+    @Transactional(readOnly = true)
+    public ResponseEntity<APIResponse> getArticlesByUserByStorage(Long id) {
+        try {
+            Optional<BeanUser> foundStorage = userRepository.findById(id);
+           List<Article> foundByStorage = articleRepository.findByStoragesId(foundStorage.get().getStorage().getId());
+            return ResponseEntity.ok(new APIResponse("Articulos Encontrados", foundByStorage, false, HttpStatus.OK));
+
+        }catch (Exception e){
+            log.error("Algo salio mal "+ e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse("Error al encontarar los Aticulos", true, HttpStatus.INTERNAL_SERVER_ERROR));
+
+        }
+
     }
 
     @Transactional(rollbackFor = Exception.class)

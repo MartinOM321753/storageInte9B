@@ -1,6 +1,7 @@
 package mx.edu.utez.sima.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -213,6 +214,44 @@ public class ArticleController {
             @PathVariable Long articleId,
             @RequestParam Long quantity) {
         return articleService.assignArticleToStorage(articleId, storageId, quantity);
+    }
+
+
+    @Operation(
+            summary = "Obtener artículos por usuario y almacén",
+            description = "Retorna una lista de artículos asociados a los almacenes vinculados al usuario especificado.",
+            tags = { "Artículos" }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de artículos recuperada exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = APIResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No se encontraron artículos o el usuario no existe",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor",
+                    content = @Content
+            )
+    })
+    @GetMapping("/storage/user/{id}")
+    public ResponseEntity<APIResponse> getArticlesByUserByStorage(
+            @Parameter(
+                    description = "ID del usuario del que se quieren obtener los artículos asociados a sus almacenes",
+                    required = true,
+                    example = "1"
+            )
+            @PathVariable Long id
+    ) {
+        return articleService.getArticlesByUserByStorage(id);
     }
 
 
